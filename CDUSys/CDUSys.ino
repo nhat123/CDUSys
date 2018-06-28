@@ -1,16 +1,66 @@
-/*
- Name:		CDUSys.ino
- Created:	6/28/2018 10:24:08 PM
- Author:	cptpr
-*/
+#include <Wire.h>
+#include <LiquidCrystal_I2C\LiquidCrystal_I2C.h>
+#include <Keypad\Keypad.h>
 
-// the setup function runs once when you press reset or power the board
-void setup() 
+#define COL 4
+#define ROW 4
+
+char keym[COL][ROW] = {
+	{ '1', '2', '3', 'A' },
+	{ '4', '5', '6', 'B' },
+	{ '7', '8', '9', 'C' },
+	{ '*', '0', '#', 'D' },
+};
+
+byte rowk[COL] = { 5,4,3,2 };
+byte colk[ROW] = { 9,8,7,6 };
+
+String keypress;
+Keypad ksp = Keypad(makeKeymap(keym), rowk, colk, ROW, COL);
+
+LiquidCrystal_I2C lcd(0x3f, 16, 2);
+
+void setup()
 {
-
+	Serial.begin(9600);
+	lcd.backlight();
+	lcd.setCursor(0, 0);
 }
 
-// the loop function runs over and over again until power down or reset
-void loop() {
-  
+void input()
+{
+	String in, cache;
+	while (true)
+	{
+		cache = String(ksp.getKey());
+		if (cache)
+		{
+			if (cache != "#" && in.length() < 16 && cache != "*")
+			{
+				in += cache;
+			}
+			else if (cache == "*" && in.length() >= 0)
+			{
+				in.remove(in.length() - 1);
+			}
+			else
+			{
+				keypress = in;
+				Serial.println(in);
+				break;
+			}
+		}
+	}
+}
+
+void loop()
+{
+	input();
+	char out;
+	for (int i = 0; i < keypress.length(); i++)
+	{
+		lcd.setCursor(i, 0);
+		lcd.print(keypress[i]);
+		lcd.print(out);
+	}
 }
